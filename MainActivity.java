@@ -1,42 +1,107 @@
-package com.example.prof803.bdapplication;
+package com.example.prof803.traducao;
 
 import android.app.Activity;
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-
-import java.util.ArrayList;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
-    private ListView lista;
+    private TextView textoFrase;
+    private EditText campoTraducao;
+    private Button botaoEnviar;
+    private TextView numTentativas;
+
+    private TextoTraducao frases [] = {
+            new TextoTraducao("House", "Casa"),
+            new TextoTraducao("Dog", "Cachorro"),
+            new TextoTraducao("Cat", "Gato"),
+            new TextoTraducao("Car", "Carro")
+    };
+
+    private int posicao = 0;
+
+    private int acertos = 0;
+    private int erros = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        lista = findViewById(R.id.lista);
+        textoFrase = findViewById(R.id.textFrase);
+        campoTraducao = findViewById(R.id.campoTraducao);
+        botaoEnviar = findViewById(R.id.botaoEnviar);
+        numTentativas = findViewById(R.id.numTentativas);
 
-        PessoaDao pessoaDao =
-                new PessoaDao(getApplicationContext());
-        pessoaDao.inserir(
-                new Pessoa("xyz", "123",30));
+        textoFrase.setText(frases[posicao].getTexto());
 
+        botaoEnviar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (posicao > frases.length - 1) {
+                    Intent intent = new Intent(
+                            getApplicationContext(),
+                            ResultadoActivity.class
+                    );
+                    intent.putExtra(
+                            "mensagem", "Parabéns! Você ganhou!");
+                    intent.putExtra("acertos", acertos);
+                    intent.putExtra("erros", erros);
+                    startActivity(intent);
+                } else {
 
-        ArrayAdapter<Pessoa> items =
-                new ArrayAdapter<Pessoa>(
-                        getApplicationContext(),
-                        android.R.layout.simple_list_item_1,
-                        pessoaDao.listar()
-                );
-        lista.setAdapter(items);
+                    int num = Integer.parseInt(
+                            numTentativas.getText().toString());
+                    if (num == 0) {
+                        Intent intent = new Intent(
+                                getApplicationContext(),
+                                ResultadoActivity.class
+                        );
+                        intent.putExtra(
+                                "mensagem", "Tente novamente!");
+                        intent.putExtra("acertos", acertos);
+                        intent.putExtra("erros", erros);
+                        startActivity(intent);
+                    } else {
+                        String tentativa = campoTraducao.getText().toString();
+                        String traducao = frases[posicao].getTraducao();
+                        if (tentativa.equalsIgnoreCase(traducao)) {
+                            acertos++;
+                            campoTraducao.setText("");
+                            Toast.makeText(
+                                    getApplicationContext(),
+                                    "Parabéns, você acertou!",
+                                    Toast.LENGTH_LONG
+                            ).show();
 
+                            posicao++;
 
+                            if (!(posicao > frases.length - 1)) {
+                                textoFrase.setText(frases[posicao].getTexto());
+                            }
 
+                        } else {
+                            erros++;
+                            Toast.makeText(
+                                    getApplicationContext(),
+                                    "Errou!",
+                                    Toast.LENGTH_LONG
+                            ).show();
+
+                            num--;
+                            numTentativas.setText(String.valueOf(num));
+
+                        }
+                    }
+                }
+
+            }
+        });
 
     }
 }
